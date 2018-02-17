@@ -17,9 +17,6 @@ const int deviceID = 4;
 // device data
 int product_weight;
 
-// testing
-long randNumber;
-
 //HX711 constructor (dout pin, sck pin)
 HX711_ADC LoadCell(D2, D3);
 
@@ -30,8 +27,17 @@ float differences[20];
 int i, lastProductCount; 
 bool stable, lastStable;
 float compensatedValue, lastValue, cumulatedDifference; 
-    
+
 void setup() {
+  //pin adjustment
+  pinMode(D6, OUTPUT); //LED yellow
+  pinMode(D5, OUTPUT); //LED red
+  pinMode(D0, OUTPUT); //LED green
+  
+  digitalWrite(D6, HIGH);
+  digitalWrite(D5, LOW);
+  digitalWrite(D0, LOW);
+
   //network communication
   Serial.begin(115200);                          // set serial baud rate
   Serial.println();
@@ -43,13 +49,13 @@ void setup() {
 
   Serial.println("Setup completed");
   Serial.println("");
-
+  
   //Scale
-  pinMode(D5, INPUT);
-  pinMode(D1, OUTPUT);
   setupScale();
 
   https_post_quantity(0);
+    digitalWrite(D6, LOW);
+    digitalWrite(D0, HIGH);
 }
 
 void loop() {
@@ -155,27 +161,24 @@ int calcProductCount(float value) {
 
 // ***************************  HTTPS stuff  ***************************
 void https_get_product_weight() {
-    String url = "/devices/" + String(deviceID) + "/product_weight/?format=json";
-    
+    digitalWrite(D6, HIGH);
+    String url = "/devices/" + String(deviceID) + "/product_weight/?format=json";        
     String result = https_get(url);
 
     Serial.println(result);
     product_weight = result.toInt();
+    digitalWrite(D6, LOW);
 }
 
 void https_post_quantity(int quantity) {
     String url; 
     String data = "last_weight=" + String(quantity);
 
-    tone(D1, 1000); // Send 1KHz sound signal...
-    delay(500);        // ...for 1 sec
-    noTone(D1);     // Stop sound...
+    digitalWrite(D6, HIGH);
     
     url = "/devices/" + String(deviceID) + "/weight";
     if(https_post(url, data)) {
-      tone(D1, 1000); // Send 1KHz sound signal...
-      delay(1500);        // ...for 1 sec
-      noTone(D1);     // Stop sound...
+      digitalWrite(D6, LOW);
     }
 }
 
